@@ -21,8 +21,7 @@ repositories {
 
 dependencies {
     compile group: 'fr.inria.gforge.spoon', name: 'spoon-core', version: '6.0.0'
-    compile group: 'com.google.guava', name: 'guava', version: '23.0'
-    compile group: 'org.reflections', name: 'reflections', version: '0.9.11'
+
 }
 
 //create a single Jar with all dependencies
