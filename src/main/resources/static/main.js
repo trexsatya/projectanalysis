@@ -44,16 +44,16 @@ function nodeLabel(nId){
 function loadGraphData(container){
     fetch('/api/graphData').then(res => res.json()).then(it => {
          var nodes = Object.keys(it.nodes).map(k => {
-                             var n = it.nodes[k];
+                 var n = it.nodes[k];
 
-                             var nm = nodeLabel(n.name);
+                 var nm = nodeLabel(n.name);
 
-                             var node = {id: n.name, label: n.type == 'CLASS' ? nm : "<<" + nm + ">>", color: 'skyblue'}
+                 var node = {id: n.name, label: n.type == 'CLASS' ? nm : "<<" + nm + ">>", color: 'skyblue', title: n.name}
 
-                             if(n.type == 'INTERFACE') {
-                                node.color = 'yellow'
-                             }
-                             return node
+                 if(n.type == 'INTERFACE') {
+                    node.color = 'yellow'
+                 }
+                 return node
          });
 //         console.log(nodes);
         //edges [{key : { node: { name, type }, relationshipType }, value: }]
@@ -67,6 +67,10 @@ function loadGraphData(container){
                 if(e.relationshipType == 'IS_COMPOSED_OF') {
                     edge.dashes = true
                 }
+                if(e.referenceName && e.referenceName.trim().length) {
+                    edge.label = e.referenceName
+                    edge.font = { size: 9, align: 'middle'}
+                }
                 return edge;
             })
 
@@ -79,11 +83,19 @@ function loadGraphData(container){
                  edges: edges
          };
          var options = {
-            layout: { improvedLayout: false },
+            layout: {
+                improvedLayout: false,
+                hierarchical: {
+                    enabled: false,
+                    edgeMinimization: false,
+                    sortMethod: 'directed' //or 'hubsize'
+                }
+            },
             physics: {
                 enabled: false,
+                solver: 'forceAtlas2Based', //'barnesHut', 'repulsion', 'hierarchicalRepulsion', 'forceAtlas2Based'
                 stabilization: {
-                      iterations: 500
+                      iterations: 10, fit: false
                 }
             }
          };

@@ -17,7 +17,7 @@ public class ClassProcessor extends AbstractProcessor<CtClass> {
     public void process(CtClass element) {
         if(isInnerClass(element)) return;
 
-        if(element.getQualifiedName().contains("InternalServer")) {
+        if(element.getQualifiedName().contains("InternalIndexService")) {
             System.out.println();
         }
 //        System.out.println(element.getQualifiedName());
@@ -35,19 +35,18 @@ public class ClassProcessor extends AbstractProcessor<CtClass> {
             return nodeFn.apply(ifc.getQualifiedName(), Node.Type.INTERFACE);
         });
 
-        if (superclass != null)
-            Global.INSTANCE.addIsALink(nodeFn.apply(superclass.getQualifiedName(), Node.Type.CLASS), thisClass);
+        if (superclass != null) {
+            Global.INSTANCE.addIsALink(nodeFn.apply(superclass.getQualifiedName(), thisClass.type), thisClass);
+        }
 
         implementsThese.forEach(ifc -> Global.INSTANCE.addIsLikeLink(thisClass, ifc));
 
         Collection<CtFieldReference<?>> allFields = element.getAllFields();
 
         allFields.stream().filter(fieldRef -> !fieldRef.getType().isPrimitive())
-                .map(ctFieldReference -> {
-                    return nodeFn.apply(ctFieldReference.getType().getQualifiedName(), nodeType(ctFieldReference));
-                })
-                .forEach(node -> {
-                    Global.INSTANCE.addThisRefersToThatLink(thisClass, node);
+                .forEach(ctFieldReference -> {
+                    Node node = nodeFn.apply(ctFieldReference.getType().getQualifiedName(), nodeType(ctFieldReference));
+                    Global.INSTANCE.addThisRefersToThatLink(thisClass, node, ctFieldReference.getSimpleName());
                 });
     }
 

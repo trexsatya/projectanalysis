@@ -11,6 +11,10 @@
                 height: 90%;
                 border: 1px solid lightgray;
             }
+
+            #depth {
+                width: 60px;
+            }
         </style>
         <script type="text/javascript">
             function addHandlersToTheNetwork() {
@@ -25,7 +29,15 @@
                          updateNetwork();
                      }
                   }
-                })
+                });
+
+                window.loadedNetwork.network.on("dragEnd", function (params) {
+                      for (var i = 0; i < params.nodes.length; i++) {
+                          var nodeId = params.nodes[i];
+                          //window.loadedNetwork.data.nodes.update({id: nodeId, fixed: {x: true, y: true}});
+                      }
+                });
+
             }
 
             function drawNetwork(container, data, options){
@@ -49,19 +61,19 @@
             }
 
             function updateNetwork(){
-                //perform BFS to two or three neighbors
+                if(!window.loadedNetwork) return;
+
                 var search = document.getElementById('search').value
                 var depth = document.getElementById('depth').value
                 var exclude = document.getElementById('exclude').value
                 addHashesToUrl(search, depth, exclude)
 
-                exclude = (exclude || '').split(';')
+                exclude = (exclude || '').split(',')
                 var notExcluded = n => !exclude.find(e => n.id.match(e))
 
                 var nodes = window.loadedNetwork.originalData.nodes
                 var edges = window.loadedNetwork.originalData.edges
 
-                //And connected nodes upto 3 levels?
                 var connectedNeighbors = []
                 nodes.filter(n => n.id.match(search)).forEach(n => {
                     var res = window.loadedNetwork.graph.dfs(n.id, depth);
@@ -71,7 +83,12 @@
                 var nodesToShow = []
                 nodes.forEach(n => {
                     if( connectedNeighbors.includes(n.id)) {
-                        if(notExcluded(n)) nodesToShow.push(n);
+                        if(notExcluded(n)) {
+                             nodesToShow.push(n);
+                             if(n.id.match(search)) {
+                                n.color = 'blue'
+                             }
+                        }
                     }
                 })
 
@@ -82,7 +99,13 @@
                 var idx = 0;
                 connectedNeighbors.map(nId => parseSpecialNode(nId)).filter(it => it != null).forEach(spl => {
                     var conn = spl.connections
-                    var splNode = { id: 'spl-'+(idx++), label: conn.slice(0,3).map(c => nodeLabel(c)).join(',\n')+ '...' +(conn.length-3) + ' more', shape: 'box', color: 'cyan', special: true}
+                    var splNode = { id: 'spl-'+(idx++),
+                                    label: conn.slice(0,3).map(c => nodeLabel(c)).join(',\n')+ '...' +(conn.length-3) + ' more',
+                                    shape: 'box',
+                                    color: 'cyan'
+                                    //fixed: {x: true, y: true}
+                                    ,title: "<div>"+conn.join('<br>')+"</div>"
+                                   }
                     nodesToShow.push(splNode)
                     edges.push({ from: nodes.find(n => n.id == spl.source).id, to: splNode.id, dashed: true, color: 'red' })
                 })
@@ -129,7 +152,7 @@
             <input type="search" id="search" onchange="updateNetwork()">
             <input type="number" id="depth" value="2" onchange="updateNetwork()">
             <button id="redraw" onclick="redrawNetwork()">Redraw</button>
-            <input type="text" id="exclude" onchange="updateNetwork()">
+            Exclude: <input placeholder="E.g. x;y;z (regex enabled, case sensitive)" type="text" id="exclude" value="java.lang,java.io" onchange="updateNetwork()">
         </div>
         <div id="containeForNetworkGraph">
         </div>
@@ -139,7 +162,8 @@
             loadGraphData("containeForNetworkGraph")
             addHandlersToTheNetwork();
 
-            loadFromHash()
+            window.onpopstate = e => loadFromHash()
+
         </script>
     </body>
 </html>

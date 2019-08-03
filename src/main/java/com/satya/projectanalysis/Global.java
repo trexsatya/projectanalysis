@@ -5,27 +5,19 @@ import java.util.*;
 public enum Global {
     INSTANCE;
 
-    class Graph {
-        private Map<String, List<String>> adjList = new HashMap<>();
-
-        void addEdge(String x, String y){
-            List<String> list = adjList.getOrDefault(x, new ArrayList<>());
-            list.add(y);
-            adjList.put(x, list);
-
-            List<String> list1 = adjList.getOrDefault(y, new ArrayList<>());
-            list1.add(x);
-            adjList.put(y, list1);
-        }
-    }
-
     public static class Pair {
         public Node node;
         public RelationshipType relationshipType;
+        public String referenceName;
 
-        public Pair(Node node, RelationshipType relationshipType) {
+        public Pair(Node node, RelationshipType relationshipType, String referenceName) {
             this.node = node;
             this.relationshipType = relationshipType;
+            this.referenceName = referenceName;
+        }
+
+        public Pair(Node node, RelationshipType relationshipType) {
+            this(node, relationshipType, null);
         }
 
         @Override
@@ -63,7 +55,7 @@ public enum Global {
     }
 
     public void addIsALink(Node parent, Node child) {
-        relationshipMap.put(new Pair(child, RelationshipType.IS_A), child.name);
+        relationshipMap.put(new Pair(child, RelationshipType.IS_A), parent.name);
     }
 
     public void addIsLikeLink(Node thisClass, Node isLikeThis) {
@@ -71,8 +63,8 @@ public enum Global {
         relationshipMap.put(new Pair(thisClass, RelationshipType.IS_LIKE), isLikeThis.name);
     }
 
-    public void addThisRefersToThatLink(Node thisClass, Node thatClass) {
-        relationshipMap.put(new Pair(thisClass, RelationshipType.IS_COMPOSED_OF), thatClass.name);
+    public void addThisRefersToThatLink(Node thisClass, Node thatClass, String simpleName) {
+        relationshipMap.put(new Pair(thisClass, RelationshipType.IS_COMPOSED_OF, simpleName), thatClass.name);
     }
 
     public Map<Pair, String> getRelationships(){
