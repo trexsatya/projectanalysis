@@ -1,4 +1,5 @@
 build/*
+spooned
 !build/libs/
 .idea/
 .gradle/

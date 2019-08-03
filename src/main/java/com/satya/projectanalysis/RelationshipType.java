@@ -1,0 +1,5 @@
+package com.satya.projectanalysis;
+
+enum RelationshipType {
+    IS_A, IS_LIKE, IS_COMPOSED_OF, HAS
+}

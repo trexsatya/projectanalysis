@@ -1,0 +1,145 @@
+<html>
+    <head>
+        <script src="/static/main.js"> </script>
+        <script src="/static/lib/vis-network.js"> </script>
+        <link href="/static/main.css" rel="stylesheet">
+        <link href="/static/lib/vis-network.css" rel="stylesheet">
+
+        <style >
+            #containeForNetworkGraph {
+                width: 100%;
+                height: 90%;
+                border: 1px solid lightgray;
+            }
+        </style>
+        <script type="text/javascript">
+            function addHandlersToTheNetwork() {
+                if(!window.loadedNetwork) return;
+
+                window.loadedNetwork.network.on('doubleClick', e => {
+                  if(e.nodes && e.nodes.length > 0) {
+                     if(e.nodes[0].startsWith('spl-')){
+
+                     } else {
+                         document.getElementById('search').value = e.nodes[0];
+                         updateNetwork();
+                     }
+                  }
+                })
+            }
+
+            function drawNetwork(container, data, options){
+               var opts = options;
+               if(data.nodes.length < 300) opts.physics.enabled = true;
+
+               //if a node has more than 5 connections; remove that node and replace
+               var edgesToRemove = []
+               data.nodes.forEach(n => {
+                  //var prune = loadedNetwork.graph.adjList[n.id].length > 5
+
+               })
+
+               var network = new vis.Network(container, data, opts)
+
+               window.loadedNetwork.network = network
+
+               addHandlersToTheNetwork();
+
+               return network
+            }
+
+            function updateNetwork(){
+                //perform BFS to two or three neighbors
+                var search = document.getElementById('search').value
+                var depth = document.getElementById('depth').value
+                var exclude = document.getElementById('exclude').value
+                addHashesToUrl(search, depth, exclude)
+
+                exclude = (exclude || '').split(';')
+                var notExcluded = n => !exclude.find(e => n.id.match(e))
+
+                var nodes = window.loadedNetwork.originalData.nodes
+                var edges = window.loadedNetwork.originalData.edges
+
+                //And connected nodes upto 3 levels?
+                var connectedNeighbors = []
+                nodes.filter(n => n.id.match(search)).forEach(n => {
+                    var res = window.loadedNetwork.graph.dfs(n.id, depth);
+                    connectedNeighbors = connectedNeighbors.concat(res);
+                })
+
+                var nodesToShow = []
+                nodes.forEach(n => {
+                    if( connectedNeighbors.includes(n.id)) {
+                        if(notExcluded(n)) nodesToShow.push(n);
+                    }
+                })
+
+                var isAVisibleNode = id => nodesToShow.find(n => n.id == id)
+
+                edges = edges.filter(e => isAVisibleNode(e.from) || isAVisibleNode(e.to));
+
+                var idx = 0;
+                connectedNeighbors.map(nId => parseSpecialNode(nId)).filter(it => it != null).forEach(spl => {
+                    var conn = spl.connections
+                    var splNode = { id: 'spl-'+(idx++), label: conn.slice(0,3).map(c => nodeLabel(c)).join(',\n')+ '...' +(conn.length-3) + ' more', shape: 'box', color: 'cyan', special: true}
+                    nodesToShow.push(splNode)
+                    edges.push({ from: nodes.find(n => n.id == spl.source).id, to: splNode.id, dashed: true, color: 'red' })
+                })
+
+
+                var data = {
+                    nodes: nodesToShow,
+                    edges: edges
+                };
+
+                window.loadedNetwork.data = data;
+
+                var network = drawNetwork(window.loadedNetwork.container, data, window.loadedNetwork.options);
+                window.loadedNetwork.network = network;
+            }
+
+            function redrawNetwork(){
+                window.loadedNetwork.network = drawNetwork(window.loadedNetwork.container,
+                                                               window.loadedNetwork.data,
+                                                               window.loadedNetwork.options);
+            }
+
+            function addHashesToUrl(search, depth, exclude){
+                window.location.hash = [search, depth, exclude].join(';')
+            }
+
+            function loadFromHash(){
+                 var [search, depth, exclude] = window.location.hash.replace('#','').split(';')
+                 if(search)
+                    document.getElementById('search').value = search;
+                 if(depth)
+                    document.getElementById('depth').value = depth;
+                 if(exclude)
+                    document.getElementById('exclude').value = exclude;
+
+                 if(search)updateNetwork()
+            }
+
+        </script>
+    </head>
+
+    <body>
+        <div id="top-container">
+            <input type="search" id="search" onchange="updateNetwork()">
+            <input type="number" id="depth" value="2" onchange="updateNetwork()">
+            <button id="redraw" onclick="redrawNetwork()">Redraw</button>
+            <input type="text" id="exclude" onchange="updateNetwork()">
+        </div>
+        <div id="containeForNetworkGraph">
+        </div>
+
+        <script >
+            //showSampleData("containeForNetworkGraph");
+            loadGraphData("containeForNetworkGraph")
+            addHandlersToTheNetwork();
+
+            loadFromHash()
+        </script>
+    </body>
+</html>
