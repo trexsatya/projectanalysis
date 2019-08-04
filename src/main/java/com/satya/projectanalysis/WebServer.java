@@ -35,6 +35,11 @@ public class WebServer {
 
         Gson gson = new Gson();
 
+        Spark.get("/api/classData", (req,res) -> {
+            String name = req.queryParams("name");
+            return Global.INSTANCE.getClassData(name);
+        }, gson::toJson);
+
         Spark.get("/api/graphData", (req,res) -> {
             String searchParam = req.params("search");
 

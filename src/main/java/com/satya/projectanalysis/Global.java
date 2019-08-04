@@ -33,6 +33,8 @@ public enum Global {
     //NodeId -> NodeId
     private Map<Pair, String> relationshipMap = new HashMap<>();
 
+    private Map<String, ClassData> classDataMap = new HashMap<>();
+
     public void addNode(Node node){
         nodes.put(node.name, node);
     }
@@ -70,5 +72,13 @@ public enum Global {
 
     public Map<Pair, String> getRelationships(){
         return relationshipMap;
+    }
+
+    public void addClassData(String classNm, ClassData classData){
+        classDataMap.put(classNm, classData);
+    }
+
+    public ClassData getClassData(String id){
+        return classDataMap.get(id);
     }
 }

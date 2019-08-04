@@ -41,7 +41,10 @@ public class Analyzer {
         final ClassProcessor processor = new ClassProcessor();
         processingManager.addProcessor(processor);
         processingManager.addProcessor(new MethodProcessor());
+        processingManager.addProcessor(new InterfaceProcessor());
+
         processingManager.process(factory.Class().getAll());
+        processingManager.process(factory.Interface().getAll());
 
         Global.INSTANCE.getRelationships().forEach((k,v) -> System.out.println(k+" "+v));
 

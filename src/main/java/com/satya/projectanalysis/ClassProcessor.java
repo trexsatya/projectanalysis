@@ -2,8 +2,12 @@ package com.satya.projectanalysis;
 
 import spoon.processing.AbstractProcessor;
 import spoon.reflect.declaration.CtClass;
+import spoon.reflect.declaration.CtConstructor;
+import spoon.reflect.declaration.CtMethod;
+import spoon.reflect.declaration.CtModifiable;
 import spoon.reflect.reference.CtFieldReference;
 import spoon.reflect.reference.CtTypeReference;
+import spoon.support.reflect.declaration.CtConstructorImpl;
 import spoon.support.util.ImmutableMap;
 
 import java.util.Collection;
@@ -12,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ClassProcessor extends AbstractProcessor<CtClass> {
@@ -20,7 +25,7 @@ public class ClassProcessor extends AbstractProcessor<CtClass> {
     public void process(CtClass element) {
         if(isInnerClass(element)) return;
 
-        if(element.getQualifiedName().contains("InternalIndicesService")) {
+        if(element.getQualifiedName().endsWith(".IndexShard")) {
             System.out.println();
         }
 //        System.out.println(element.getQualifiedName());
@@ -53,6 +58,15 @@ public class ClassProcessor extends AbstractProcessor<CtClass> {
                     //referenceName, referenceName:list, referenceName:mappedBy[String]
                     Global.INSTANCE.addThisRefersToThatLink(thisClass, nodeAndRefName._1, nodeAndRefName._2);
                 });
+
+        Set<CtConstructor> constructors = element.getConstructors();
+        List<ClassData.MethodData> constructorsList = constructors.stream().filter(CtModifiable::isPublic).map(ClassData.MethodData::of).collect(Collectors.toList());
+
+        Set<CtMethod<?>> methods = element.getMethods();
+        List<ClassData.MethodData> methodData = methods.stream().filter(CtModifiable::isPublic).map(ClassData.MethodData::of).collect(Collectors.toList());
+        constructorsList.addAll(methodData);
+
+        Global.INSTANCE.addClassData(thisClass.name, new ClassData(constructorsList));
     }
 
     private Tuple<Node,String> getTypeParamAwareNode(CtFieldReference<?> ctFieldReference, BiFunction<String, Node.Type, Node> nodeFn) {

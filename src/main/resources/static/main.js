@@ -37,6 +37,7 @@ function showSampleData(id) {
 }
 
 function nodeLabel(nId){
+    if(!nId) return ""
     var splits = nId.split(".")
     return splits[splits.length-1]
 }

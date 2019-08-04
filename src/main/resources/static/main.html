@@ -7,18 +7,54 @@
 
         <style >
             #containeForNetworkGraph {
-                width: 100%;
+                width: 85%;
                 height: 90%;
                 border: 1px solid lightgray;
+                float: left;
             }
 
-            #depth {
+            #nodeDetails {
+                float: right;
+                width: 14%;
+            }
+
+            #methodList li {
+                margin-bottom: 4px;
+                font-size: xx-small;
+            }
+
+            input#depth {
                 width: 60px;
             }
+
         </style>
         <script type="text/javascript">
             function addHandlersToTheNetwork() {
                 if(!window.loadedNetwork) return;
+
+                var li = text => { var el = document.createElement('li'); el.innerHTML = text; return el; }
+
+                window.loadedNetwork.network.on('click', e => {
+                  if(e.nodes && e.nodes.length > 0) {
+                     if(e.nodes[0].startsWith('spl-')){
+
+                     } else {
+                         document.getElementById('className').innerHTML = e.nodes[0];
+                         document.getElementById('methodList').innerHTML = ''
+
+                         fetch('/api/classData?name='+e.nodes[0]).then(it => it.json()).then(it => {
+
+                            it.methodDataList.map(x => {
+                                var annotations = x.annotations.map(x => "@"+ nodeLabel(x) ).join(", ");
+
+                                var params = Object.keys(x.paramList).map(k => nodeLabel(x.paramList[k]) + " " + k).join(", ")
+                                return annotations + " " + nodeLabel(x.returnType) + " " + x.name + "(" + params +")";
+                            }).forEach(method => document.getElementById('methodList').appendChild( li(method) ));
+
+                         })
+                     }
+                  }
+                });
 
                 window.loadedNetwork.network.on('doubleClick', e => {
                   if(e.nodes && e.nodes.length > 0) {
@@ -31,11 +67,8 @@
                   }
                 });
 
-                window.loadedNetwork.network.on("dragEnd", function (params) {
-                      for (var i = 0; i < params.nodes.length; i++) {
-                          var nodeId = params.nodes[i];
-                          //window.loadedNetwork.data.nodes.update({id: nodeId, fixed: {x: true, y: true}});
-                      }
+                window.loadedNetwork.network.on("stabilized", function (params) {
+                      window.loadedNetwork.network.setOptions({ physics: false });
                 });
 
             }
@@ -78,7 +111,9 @@
                 nodes.filter(n => n.id.match(search)).forEach(n => {
                     var res = window.loadedNetwork.graph.dfs(n.id, depth);
                     connectedNeighbors = connectedNeighbors.concat(res);
-                })
+                });
+
+                (window.loadedNetwork.highlightedNodes || []).forEach(hn => hn.node.color = hn.originalColor);
 
                 var nodesToShow = []
                 nodes.forEach(n => {
@@ -86,6 +121,9 @@
                         if(notExcluded(n)) {
                              nodesToShow.push(n);
                              if(n.id.match(search)) {
+                                window.loadedNetwork.highlightedNodes = window.loadedNetwork.highlightedNodes || []
+                                window.loadedNetwork.highlightedNodes.push({ node: n, originalColor: n.color})
+
                                 n.color = 'blue'
                              }
                         }
@@ -104,7 +142,7 @@
                                     shape: 'box',
                                     color: 'cyan'
                                     //fixed: {x: true, y: true}
-                                    ,title: "<div>"+conn.join('<br>')+"</div>"
+                                    ,title: "<div style='height: 300px; overflow: scroll'>"+conn.join('<br>')+"</div>"
                                    }
                     nodesToShow.push(splNode)
                     edges.push({ from: nodes.find(n => n.id == spl.source).id, to: splNode.id, dashed: true, color: 'red' })
@@ -156,7 +194,10 @@
         </div>
         <div id="containeForNetworkGraph">
         </div>
-
+        <div id="nodeDetails">
+            <div id="className"></div>
+            <ul id="methodList"></ul>
+        </div>
         <script >
             //showSampleData("containeForNetworkGraph");
             loadGraphData("containeForNetworkGraph")
