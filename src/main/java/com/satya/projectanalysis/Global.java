@@ -5,25 +5,39 @@ import java.util.*;
 public enum Global {
     INSTANCE;
 
-    public static class Pair {
+    public static class ClassRelationship {
         public Node node;
         public RelationshipType relationshipType;
         public String referenceName = "";
+        public String target;
 
-        public Pair(Node node, RelationshipType relationshipType, String referenceName) {
+
+        public ClassRelationship(Node node, RelationshipType relationshipType, String referenceName, String target) {
             this.node = node;
             this.relationshipType = relationshipType;
             this.referenceName = referenceName;
-        }
-
-
-        public Pair(Node node, RelationshipType relationshipType) {
-            this(node, relationshipType, "");
+            this.target = target;
         }
 
         @Override
         public String toString() {
             return node + " " + relationshipType + " " + referenceName;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ClassRelationship classRelationship = (ClassRelationship) o;
+            return Objects.equals(node, classRelationship.node) &&
+                    relationshipType == classRelationship.relationshipType &&
+                    Objects.equals(referenceName, classRelationship.referenceName) &&
+                    Objects.equals(target, classRelationship.target);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(node, relationshipType, referenceName, target);
         }
     }
 
@@ -31,7 +45,7 @@ public enum Global {
     private Map<String, Node> nodes = new HashMap<>();
 
     //NodeId -> NodeId
-    private Map<Pair, String> relationshipMap = new HashMap<>();
+    private Map<ClassRelationship, Boolean> relationshipMap = new HashMap<>();
 
     private Map<String, ClassData> classDataMap = new HashMap<>();
 
@@ -58,19 +72,19 @@ public enum Global {
     }
 
     public void addIsALink(Node parent, Node child) {
-        relationshipMap.put(new Pair(child, RelationshipType.IS_A), parent.name);
+        relationshipMap.put(new ClassRelationshipBuilder().setNode(child).setRelationshipType(RelationshipType.IS_A).setTarget(parent.name).build(), true);
     }
 
     public void addIsLikeLink(Node thisClass, Node isLikeThis) {
 
-        relationshipMap.put(new Pair(thisClass, RelationshipType.IS_LIKE), isLikeThis.name);
+        relationshipMap.put(new ClassRelationshipBuilder().setNode(thisClass).setRelationshipType(RelationshipType.IS_LIKE).setTarget(isLikeThis.name).build(), true);
     }
 
     public void addThisRefersToThatLink(Node thisClass, Node thatClass, String simpleName) {
-        relationshipMap.put(new Pair(thisClass, RelationshipType.IS_COMPOSED_OF, simpleName), thatClass.name);
+        relationshipMap.put(new ClassRelationshipBuilder().setNode(thisClass).setRelationshipType(RelationshipType.IS_COMPOSED_OF).setReferenceName(simpleName).setTarget(thatClass.name).build(), true);
     }
 
-    public Map<Pair, String> getRelationships(){
+    public Map<ClassRelationship, Boolean> getRelationships(){
         return relationshipMap;
     }
 

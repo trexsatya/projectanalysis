@@ -25,7 +25,7 @@ public class ClassProcessor extends AbstractProcessor<CtClass> {
     public void process(CtClass element) {
         if(isInnerClass(element)) return;
 
-        if(element.getQualifiedName().endsWith(".IndexShard")) {
+        if(element.getQualifiedName().endsWith(".RobinEngine")) {
             System.out.println();
         }
 //        System.out.println(element.getQualifiedName());

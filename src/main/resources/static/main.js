@@ -61,7 +61,7 @@ function loadGraphData(container){
          var edges = Object.keys(it.edges)
             .map(k => {
                 var e = it.edges[k].key;
-                var edge = {from: e.node.name, to: it.edges[k].value }
+                var edge = {from: e.node.name, to: e.target }
                 if(e.relationshipType == 'IS_LIKE' || e.relationshipType == 'IS_A' || e.relationshipType == 'IS_COMPOSED_OF') {
                     edge.arrows = 'to'
                 }
