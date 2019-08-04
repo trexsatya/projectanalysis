@@ -40,6 +40,7 @@ public class Analyzer {
         final ProcessingManager processingManager = new QueueProcessingManager(factory);
         final ClassProcessor processor = new ClassProcessor();
         processingManager.addProcessor(processor);
+        processingManager.addProcessor(new MethodProcessor());
         processingManager.process(factory.Class().getAll());
 
         Global.INSTANCE.getRelationships().forEach((k,v) -> System.out.println(k+" "+v));

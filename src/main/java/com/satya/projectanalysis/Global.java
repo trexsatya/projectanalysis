@@ -8,7 +8,7 @@ public enum Global {
     public static class Pair {
         public Node node;
         public RelationshipType relationshipType;
-        public String referenceName;
+        public String referenceName = "";
 
         public Pair(Node node, RelationshipType relationshipType, String referenceName) {
             this.node = node;
@@ -16,13 +16,14 @@ public enum Global {
             this.referenceName = referenceName;
         }
 
+
         public Pair(Node node, RelationshipType relationshipType) {
-            this(node, relationshipType, null);
+            this(node, relationshipType, "");
         }
 
         @Override
         public String toString() {
-            return node + " " + relationshipType;
+            return node + " " + relationshipType + " " + referenceName;
         }
     }
 

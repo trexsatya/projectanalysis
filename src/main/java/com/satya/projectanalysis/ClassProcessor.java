@@ -4,8 +4,11 @@ import spoon.processing.AbstractProcessor;
 import spoon.reflect.declaration.CtClass;
 import spoon.reflect.reference.CtFieldReference;
 import spoon.reflect.reference.CtTypeReference;
+import spoon.support.util.ImmutableMap;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -17,7 +20,7 @@ public class ClassProcessor extends AbstractProcessor<CtClass> {
     public void process(CtClass element) {
         if(isInnerClass(element)) return;
 
-        if(element.getQualifiedName().contains("InternalIndexService")) {
+        if(element.getQualifiedName().contains("InternalIndicesService")) {
             System.out.println();
         }
 //        System.out.println(element.getQualifiedName());
@@ -45,9 +48,42 @@ public class ClassProcessor extends AbstractProcessor<CtClass> {
 
         allFields.stream().filter(fieldRef -> !fieldRef.getType().isPrimitive())
                 .forEach(ctFieldReference -> {
-                    Node node = nodeFn.apply(ctFieldReference.getType().getQualifiedName(), nodeType(ctFieldReference));
-                    Global.INSTANCE.addThisRefersToThatLink(thisClass, node, ctFieldReference.getSimpleName());
+                    Tuple<Node, String> nodeAndRefName = getTypeParamAwareNode(ctFieldReference, nodeFn);
+
+                    //referenceName, referenceName:list, referenceName:mappedBy[String]
+                    Global.INSTANCE.addThisRefersToThatLink(thisClass, nodeAndRefName._1, nodeAndRefName._2);
                 });
+    }
+
+    private Tuple<Node,String> getTypeParamAwareNode(CtFieldReference<?> ctFieldReference, BiFunction<String, Node.Type, Node> nodeFn) {
+        Tuple<String, CtTypeReference> fn = fn(ctFieldReference, null);
+        Node node = nodeFn.apply(fn._2.getQualifiedName(), nodeType(fn._2));
+        return Tuple.of(node, fn._1);
+    }
+
+    private Tuple<String,CtTypeReference> fn(CtFieldReference<?> ctFieldReference, Tuple<String, CtFieldReference> temp){
+        List<CtTypeReference<?>> actualTypeArguments = ctFieldReference.getType().getActualTypeArguments();
+        String referenceSimpleName = ctFieldReference.getSimpleName();
+
+        //Handle list, map for now; TODO: Enhance
+
+        switch (ctFieldReference.getType().getSimpleName()) {
+            case "List":
+            case "ImmutableList":
+            case "Set":
+            case "Queue":
+                CtTypeReference<?> ctTypeReference = actualTypeArguments.get(0);
+                return Tuple.of(referenceSimpleName + ": listOf", ctTypeReference);
+            case "Map":
+            case "ImmutableMap":
+                return Tuple.of(referenceSimpleName + ": mappedBy["+actualTypeArguments.get(0)+"]", actualTypeArguments.get(1));
+            default:
+                return Tuple.of(referenceSimpleName, ctFieldReference.getType());
+        }
+    }
+
+    private String containmentType(CtFieldReference<?> ctFieldReference) {
+        return null;
     }
 
     private boolean isInnerClass(CtClass element) {
@@ -55,7 +91,10 @@ public class ClassProcessor extends AbstractProcessor<CtClass> {
     }
 
     private static Node.Type nodeType(CtFieldReference ctFieldReference) {
-        CtTypeReference type = ctFieldReference.getType();
+        return nodeType(ctFieldReference.getType());
+    }
+
+    private static Node.Type nodeType(CtTypeReference type) {
         return (type.isInterface()) ? Node.Type.INTERFACE : Node.Type.CLASS;
     }
 }
