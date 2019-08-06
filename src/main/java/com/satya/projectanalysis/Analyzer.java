@@ -17,12 +17,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Analyzer {
-    public static void main(String[] args) {
-        try {
-            analyze("/home/satyendra/IdeaProjects/elasticsearch/modules/elasticsearch/");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public static void main(String[] args) throws IOException, InterruptedException {
+        analyze("C:\\Dev\\Projects\\unification\\elasticsearch\\modules\\elasticsearch\\src\\main\\java");
     }
 
     private static void analyze(String path) throws IOException, InterruptedException {
@@ -46,7 +42,7 @@ public class Analyzer {
         processingManager.process(factory.Class().getAll());
         processingManager.process(factory.Interface().getAll());
 
-        Global.INSTANCE.getRelationships().forEach((k,v) -> System.out.println(k+" "+v));
+        Global.INSTANCE.getRelationships().forEach((k, v) -> System.out.println(k + " " + v));
 
         CtType s = new TypeFactory().get(String.class);
 //        s.getFields().forEach(System.out::println);
