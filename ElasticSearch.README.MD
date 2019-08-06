@@ -39,6 +39,14 @@ Clustering models:
     ClusterState
     Cluster related events and handlers; ClusterChangedEvent, ClusterStateListener
 
+    //What's happening to Shard?
+    ShardRoutingState { UNASSIGNED, INITIALIZING, STARTED, RELOCATING; }
+        A model for representing the activity of current state of Shard is
+        ShardRouting { id, relocatingId }
+
+    IndexShard { IndexShardState, ShardRouting }  //directly deals with Engine
+
+    RoutingNode to represent Node as a sequence of such ShardRouting
 
 Relationships:
     shardId -> IndexShard mapping
@@ -46,4 +54,10 @@ Relationships:
 
     IndexService manages the first relationship.
     IndicesService manages the second relationship.
+
+What happens when cluster is changed?
+    IndicesClusterStateService (a ClusterStateListener)
+        -->> creates the Index if it needs to be created; and notify listeners interested in this event (that node has been created).
+
+
 
