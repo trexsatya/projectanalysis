@@ -42,7 +42,9 @@ Clustering models:
                 => IndexShardRoutingTable { ShardId, listOf(ShardRouting) }
                     => IndexRoutingTable { index:String, shardId -> IndexShardRoutingTable }
                         => RoutingTable { index -> IndexRoutingTable }
-                        
+                => RoutingNode { listOf(ShardRouting) }
+                    => RoutingNodes { nodeId -> RoutingNode, MetaData, unassigned:listOf(RoutingNode) }
+
     Node { name, nodeId:String, TransportAddress, isDataNode:boolean }
         => Nodes { nodeId -> Node, maserNodeId, localNodeId } The idea is to represent each Node as Nodes for convenience.
         

@@ -21,7 +21,7 @@ public enum Global {
 
         @Override
         public String toString() {
-            return node + " " + relationshipType + " " + referenceName;
+            return node + " " + relationshipType + " " + referenceName + ":" + target;
         }
 
         @Override

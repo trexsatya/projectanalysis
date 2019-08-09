@@ -138,20 +138,26 @@
 
                 edges = edges.filter(e => isAVisibleNode(e.from) || isAVisibleNode(e.to));
 
+                notExcluded = splNode => !exclude.find(e => splNode.source.match(e))
+
                 var idx = 0;
                 connectedNeighbors.map(nId => parseSpecialNode(nId)).filter(it => it != null).forEach(spl => {
                     var conn = spl.connections
                     var splNode = { id: 'spl-'+(idx++),
-                                    label: conn.slice(0,3).map(c => nodeLabel(c)).join(',\n')+ '...' +(conn.length-3) + ' more',
-                                    shape: 'box',
+                                    label: (conn.length-1) + '+',
+                                    shape: 'star',
                                     color: 'cyan'
                                     //fixed: {x: true, y: true}
-                                    ,title: "<div style='height: 300px; overflow: scroll'>"+conn.join('<br>')+"</div>"
+                                    ,title: "<div style='height: 300px; overflow: scroll'>"+ spl.source + "... connected to .." + "<br>" + conn.join('<br>')+"</div>"
                                    }
-                    nodesToShow.push(splNode)
-                    edges.push({ from: nodes.find(n => n.id == spl.source).id, to: splNode.id, dashed: true, color: 'red' })
-                })
 
+                    var from = nodes.find(n => n.id == spl.source).id;
+                    var to = splNode.id;
+                    if(from && to) {
+                        if( notExcluded(spl)) nodesToShow.push(splNode);
+                        edges.push({ from: from, to: to, dashed: true, color: 'red' })
+                    }
+                })
 
                 var data = {
                     nodes: nodesToShow,
@@ -194,7 +200,7 @@
             <input type="search" id="search" onchange="updateNetwork()">
             <input type="number" id="depth" value="2" onchange="updateNetwork()">
             <button id="redraw" onclick="redrawNetwork()">Redraw</button>
-            Exclude: <input placeholder="E.g. x;y;z (regex enabled, case sensitive)" type="text" id="exclude" value="java.lang,java.io" onchange="updateNetwork()">
+            Exclude: <input placeholder="E.g. x;y;z (regex enabled, case sensitive)" type="text" id="exclude" value="java.lang,java.io,java.lang,java.util,java.io" onchange="updateNetwork()">
         </div>
         <div id="containeForNetworkGraph">
         </div>

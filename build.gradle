@@ -24,8 +24,10 @@ dependencies {
 
     compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.6.1'
 
-    compile group: 'fr.inria.gforge.spoon', name: 'spoon-core', version: '7.3.0'
+    compile group: 'fr.inria.gforge.spoon', name: 'spoon-core', version: '7.5.0'
     compile "com.sparkjava:spark-core:2.8.0"
+    compile group: 'org.javassist', name: 'javassist', version: '3.25.0-GA'
+    compile "org.apache.commons:commons-text:+"
 }
 
 //create a single Jar with all dependencies
