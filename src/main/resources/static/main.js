@@ -227,3 +227,28 @@ function testGraph(){
 };
 testGraph()
 
+function getHtmlForMethod(x){
+    var $ = jQuery;
+    var span = x => $('<span>').html(x)
+
+    var annotations = x.annotations.map(x => span("@"+ nodeLabel(x)));
+
+    var params = Object.keys(x.paramList).map(paramName => {
+                            var paramDiv = $('<div>').addClass('param')
+                                      .append(span(nodeLabel(x.paramList[paramName])).addClass('paramType'))
+                                      .append(span(" "))
+                                      .append(span(paramName).addClass('paramName'))
+
+                            return paramDiv
+                        });
+
+    var div = $('<div>')
+    annotations.forEach(a => div.append(a))
+    div.append(span(nodeLabel(x.returnType)).addClass('returnType'))
+    div.append(span(" "))
+    div.append(span(x.name).addClass('methodName'))
+    div.append(span("("))
+    params.forEach(p => div.append(p))
+    div.append(span(")"))
+    return div.html();
+}

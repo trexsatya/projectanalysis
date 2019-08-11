@@ -6,6 +6,7 @@ import spark.Spark;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -88,7 +89,10 @@ public class WebServer {
     }
 
     public static String htmlResponseFromFile(String relativePath) throws URISyntaxException, IOException {
-        URI uri = WebServer.class.getResource(relativePath).toURI();
+        URL resource = WebServer.class.getResource(relativePath);
+        if(resource == null) throw new RuntimeException(relativePath + " not found on classpath.");
+
+        URI uri = resource.toURI();
         String path = uri.toString();
         path = path.replace("/out/production/", "/src/main/");
 

@@ -35,9 +35,9 @@ public class Analyzer {
 
     public static void main(String[] args) throws Exception {
 
-        String sourceCodePath = "C:\\Dev\\Projects\\unification\\elasticsearch\\server\\src\\main\\java";
-        String byteCodePath = "C:\\Dev\\Projects\\unification\\elasticsearch\\server\\build-idea\\classes\\java\\main";
-        String classpathForJars = "C:\\Dev\\Softwares\\gradle-2.12\\bin\\caches\\modules-2\\files-2.1";
+        String sourceCodePath = "/home/satyendra/IdeaProjects/elasticsearch/server/src/main/java";
+        String byteCodePath = "/home/satyendra/IdeaProjects/elasticsearch/server/build-idea/classes/java/main";
+        String classpathForJars = "/home/satyendra/.gradle/caches/modules-2/files-2.1/";
         analyze(sourceCodePath, Arrays.asList(byteCodePath), "org.elasticsearch", classpathForJars);
     }
 

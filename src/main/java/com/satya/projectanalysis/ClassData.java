@@ -112,6 +112,8 @@ public class ClassData {
         }
 
         public static MethodData of(javassist.CtMethod method) {
+            if(method.getLongName().startsWith("java.lang.")) return null;
+
             LOG.info("Method: {}", method.getLongName());
             try {
                 Map<String,String> params = new HashMap<>();
@@ -137,7 +139,7 @@ public class ClassData {
                     LOG.warn("Could not find CodeAttribute for {}", method);
                 }
 
-                MethodData methodData = new MethodData(method.getName(), params, null);
+                MethodData methodData = new MethodData(method.getName(), params, method.getReturnType().getName());
                 Object[] annotations = method.getAnnotations();
 
                 methodData.annotations = Arrays.stream(annotations).map(Object::toString).collect(Collectors.toList());

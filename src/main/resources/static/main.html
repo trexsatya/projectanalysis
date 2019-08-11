@@ -1,7 +1,8 @@
 <html>
     <head>
-        <script src="/static/main.js"> </script>
         <script src="/static/lib/vis-network.js"> </script>
+        <script src="/static/lib/jquery.min.js"> </script>
+        <script src="/static/main.js"> </script>
         <link href="/static/main.css" rel="stylesheet">
         <link href="/static/lib/vis-network.css" rel="stylesheet">
 
@@ -27,6 +28,26 @@
                 width: 60px;
             }
 
+            .param {
+                margin-left: 11%;
+            }
+
+            .paramType {
+
+            }
+
+            .paramName {
+                font-size: smaller;
+                color: #3e97bb;
+            }
+
+            .returnType {
+
+            }
+
+            .methodName {
+                color: blue;
+            }
         </style>
         <script type="text/javascript">
             function addHandlersToTheNetwork() {
@@ -45,10 +66,7 @@
                          fetch('/api/classData?name='+e.nodes[0]).then(it => it.json()).then(it => {
 
                             it.methodDataList.map(x => {
-                                var annotations = x.annotations.map(x => "@"+ nodeLabel(x) ).join(", ");
-
-                                var params = Object.keys(x.paramList).map(k => nodeLabel(x.paramList[k]) + " " + k).join(", ")
-                                return annotations + " " + nodeLabel(x.returnType) + " " + x.name + "(" + params +")";
+                                return getHtmlForMethod(x);
                             }).forEach(method => document.getElementById('methodList').appendChild( li(method) ));
 
                          })

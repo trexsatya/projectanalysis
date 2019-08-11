@@ -5,6 +5,7 @@ import spoon.reflect.declaration.CtModifiable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -16,8 +17,11 @@ import static com.satya.projectanalysis.JavaUtils.wrapInRuntimeException;
 public class JavassistClassProcessor {
     public void process(CtClass element) throws Exception {
         if(element.getPackageName().contains("java.lang.")) return;
-
         if(isInnerClass(element)) return;
+
+        if(element.getName().contains("Coordinator")) {
+            System.out.println();
+        }
 
         CtClass superclass = element.getSuperclass();
         CtClass[] interfaces = element.getInterfaces();
@@ -34,10 +38,10 @@ public class JavassistClassProcessor {
 
         implementsThese.forEach(ifc -> Global.INSTANCE.addIsLikeLink(thisClass, ifc));
 
-        CtField[] allFields = element.getFields();
+        CtField[] allFields = element.getDeclaredFields();
 
         Arrays.stream(allFields).filter(fieldRef -> {
-                    CtClass ctClass = wrapInRuntimeException(fieldRef::getType);
+                    CtClass ctClass = wrapInRuntimeException(fieldRef::getType, false);
                     return ctClass != null && !ctClass.isPrimitive();
                 })
                 .forEach(wrapInRuntimeException(ctFieldReference -> {
@@ -51,7 +55,7 @@ public class JavassistClassProcessor {
         List<ClassData.MethodData> constructorsList = Arrays.stream(constructors).map(ClassData.MethodData::of).collect(Collectors.toList());
 
         CtMethod[] methods = element.getMethods();
-        List<ClassData.MethodData> methodData = Arrays.stream(methods).map(ClassData.MethodData::of).collect(Collectors.toList());
+        List<ClassData.MethodData> methodData = Arrays.stream(methods).map(ClassData.MethodData::of).filter(Objects::nonNull).collect(Collectors.toList());
         constructorsList.addAll(methodData);
 
         Global.INSTANCE.addClassData(thisClass.name, new ClassData(constructorsList));
