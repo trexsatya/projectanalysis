@@ -8,8 +8,13 @@ import javassist.NotFoundException;
 import javassist.bytecode.CodeAttribute;
 import javassist.bytecode.LocalVariableAttribute;
 import javassist.bytecode.MethodInfo;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import spoon.reflect.cu.SourcePosition;
 import spoon.reflect.declaration.CtAnnotation;
 import spoon.reflect.declaration.CtConstructor;
 import spoon.reflect.declaration.CtMethod;
@@ -21,19 +26,60 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Builder
+@Data
 public class ClassData {
+    @Data @Builder
+    static class ImplementsType {
+        String name;
+        List<String> typeArguments;
+    }
+
     static Logger LOG = LoggerFactory.getLogger(ClassData.class);
 
+    @Builder.Default
+    Set<ImplementsType> implementss = new HashSet<>();
+
+    @Builder.Default
+    Set<ImplementsType> extendss = new HashSet<>();
+
+    @Builder.Default
+    Set<AnnotationType> annotations = new HashSet<>();
+
+    @Builder.Default
+    Set<String> imports = new HashSet<>();
+
+    @Data
+    @AllArgsConstructor
+    public static class AnnotationType {
+        String name;
+
+        //Name, value
+        Map<String, List<String>> parameters;
+
+        public static AnnotationType of(CtAnnotation<? extends Annotation> ctAnnotation) {
+
+            String qualifiedName = ctAnnotation.getAnnotationType().getQualifiedName();
+            Map<String, List<String>> params = new HashMap<>();
+            ctAnnotation.getValues().forEach((k, v) -> {
+
+            });
+            return new AnnotationType(qualifiedName, Map.of(), "");
+        }
+
+        String summary;
+    }
+
+
+    String className;
+
+    @Data
     public static class MethodData {
         String name;
         Map<String,String> paramList;
         String returnType = "";
         String fullName;
         List<String> annotations;
-
-        public MethodData(String fullName) {
-            this.fullName = fullName;
-        }
 
         public MethodData(String name, Map<String,String> paramList, String returnType) {
             this.name = name;
@@ -97,7 +143,7 @@ public class ClassData {
                                 params.put(stringCtClassTuple._1, stringCtClassTuple._2.getName());
                             });
                 } else {
-                    LOG.warn("Could not find CodeAttribute for {}", constructor);
+//                    LOG.warn("Could not find CodeAttribute for {}", constructor);
                 }
 
                 MethodData methodData = new MethodData(constructor.getName(), params, null);
@@ -105,8 +151,9 @@ public class ClassData {
 
                 methodData.annotations = Arrays.stream(annotations).map(Object::toString).collect(Collectors.toList());
                 return methodData;
-            } catch (Exception ex){
-                ex.printStackTrace();
+            } catch (Exception | LinkageError ex){
+//                ex.printStackTrace();
+                LOG.info("Exception {}", ex.toString());
                 return null;
             }
         }
@@ -114,7 +161,7 @@ public class ClassData {
         public static MethodData of(javassist.CtMethod method) {
             if(method.getLongName().startsWith("java.lang.")) return null;
 
-            LOG.info("Method: {}", method.getLongName());
+//            LOG.info("Method: {}", method.getLongName());
             try {
                 Map<String,String> params = new HashMap<>();
                 CtClass[] parameterTypes = method.getParameterTypes();
@@ -136,7 +183,7 @@ public class ClassData {
                                 params.put(stringCtClassTuple._1, stringCtClassTuple._2.getName());
                             });
                 } else {
-                    LOG.warn("Could not find CodeAttribute for {}", method);
+//                    LOG.warn("Could not find CodeAttribute for {}", method);
                 }
 
                 MethodData methodData = new MethodData(method.getName(), params, method.getReturnType().getName());
@@ -144,22 +191,24 @@ public class ClassData {
 
                 methodData.annotations = Arrays.stream(annotations).map(Object::toString).collect(Collectors.toList());
                 return methodData;
-            } catch (Exception ex){
-                ex.printStackTrace();
+            } catch (Exception | LinkageError ex){
+//                ex.printStackTrace();
+                LOG.info("Error {} for method {}", ex.toString(), method.getLongName());
                 return null;
             }
         }
 
         private static void setParamName(LocalVariableAttribute attr, String[] parameterNames, int pos, int i) {
-            if(attr.index(i) < parameterNames.length)
-            parameterNames[attr.index(i)] = attr.variableName(i + pos);
+            if(attr.index(i) < parameterNames.length) {
+                try {
+                    parameterNames[attr.index(i)] = attr.variableName(i + pos);
+                } catch (Exception ex) {
+                    //TODO: Fix this
+                    //Ignore for now
+                }
+            }
         }
     }
 
-    public List<MethodData> methodDataList;
-
-    public ClassData(List<MethodData> methodDataList) {
-        this.methodDataList = methodDataList;
-    }
-
+    List<MethodData> methodDataList;
 }

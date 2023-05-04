@@ -1,33 +1,29 @@
 package com.satya.projectanalysis;
 
 import spoon.processing.AbstractProcessor;
-import spoon.reflect.declaration.CtClass;
-import spoon.reflect.declaration.CtConstructor;
-import spoon.reflect.declaration.CtMethod;
-import spoon.reflect.declaration.CtModifiable;
+import spoon.reflect.declaration.*;
 import spoon.reflect.reference.CtFieldReference;
 import spoon.reflect.reference.CtTypeReference;
 import spoon.support.reflect.declaration.CtConstructorImpl;
 import spoon.support.util.ImmutableMap;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.lang.annotation.Annotation;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
+
 public class ClassProcessor extends AbstractProcessor<CtClass> {
 
     @Override
     public void process(CtClass element) {
-        if(isInnerClass(element)) return;
+        //TODO: Handle inner classes
+        if (isInnerClass(element)) return;
 
-        if(element.getQualifiedName().endsWith(".RobinEngine")) {
-            System.out.println();
-        }
 //        System.out.println(element.getQualifiedName());
 
         CtTypeReference<?> superclass = element.getSuperclass();
@@ -35,13 +31,38 @@ public class ClassProcessor extends AbstractProcessor<CtClass> {
 
         Function<CtClass, Node.Type> nodeTypeFn = cls -> cls.isInterface() || cls.isAbstract() ? Node.Type.INTERFACE : Node.Type.CLASS;
 
+
+        Set<CtConstructor> constructors = element.getConstructors();
+        List<ClassData.MethodData> constructorsList = constructors.stream().filter(CtModifiable::isPublic).map(ClassData.MethodData::of).collect(toList());
+
+        Set<CtMethod<?>> methods = element.getMethods();
+        List<ClassData.MethodData> methodData = methods.stream().filter(CtModifiable::isPublic).map(ClassData.MethodData::of).collect(toList());
+        constructorsList.addAll(methodData);
+
+        List<CtAnnotation<? extends Annotation>> annotations = element.getAnnotations();
+        List<ClassData.AnnotationType> annotationTypes = annotations.stream().map(ClassData.AnnotationType::of).collect(toList());
+
+        ClassData classData = ClassData.builder()
+                .methodDataList(constructorsList)
+                .annotations(new HashSet<>(annotationTypes))
+                .className(element.getQualifiedName())
+                .implementss(
+                        interfaces.stream().map(x -> ClassData.ImplementsType.builder()
+                                        .name(x.getQualifiedName())
+                                        .typeArguments(x.getActualTypeArguments()
+                                                .stream()
+                                                .map(CtTypeInformation::getQualifiedName)
+                                                .collect(toList()))
+                                        .build())
+                                .collect(toSet()))
+                .build();
+
         BiFunction<String, Node.Type, Node> nodeFn = Global.INSTANCE::getOrCreateNode;
 
-        Node thisClass = nodeFn.apply(element.getQualifiedName(), nodeTypeFn.apply(element));
+        Node thisClass = Global.INSTANCE.getOrCreateNode(element.getQualifiedName(), nodeTypeFn.apply(element), classData);
 
-        Stream<Node> implementsThese = interfaces.stream().map(ifc -> {
-            return nodeFn.apply(ifc.getQualifiedName(), Node.Type.INTERFACE);
-        });
+        Stream<Node> implementsThese = interfaces.stream()
+                .map(ifc -> nodeFn.apply(ifc.getQualifiedName(), Node.Type.INTERFACE));
 
         if (superclass != null) {
             Global.INSTANCE.addIsALink(nodeFn.apply(superclass.getQualifiedName(), thisClass.type), thisClass);
@@ -59,23 +80,16 @@ public class ClassProcessor extends AbstractProcessor<CtClass> {
                     Global.INSTANCE.addThisRefersToThatLink(thisClass, nodeAndRefName._1, nodeAndRefName._2);
                 });
 
-        Set<CtConstructor> constructors = element.getConstructors();
-        List<ClassData.MethodData> constructorsList = constructors.stream().filter(CtModifiable::isPublic).map(ClassData.MethodData::of).collect(Collectors.toList());
-
-        Set<CtMethod<?>> methods = element.getMethods();
-        List<ClassData.MethodData> methodData = methods.stream().filter(CtModifiable::isPublic).map(ClassData.MethodData::of).collect(Collectors.toList());
-        constructorsList.addAll(methodData);
-
-        Global.INSTANCE.addClassData(thisClass.name, new ClassData(constructorsList));
+        Global.INSTANCE.addClassData(thisClass.name, classData);
     }
 
-    private Tuple<Node,String> getTypeParamAwareNode(CtFieldReference<?> ctFieldReference, BiFunction<String, Node.Type, Node> nodeFn) {
+    private Tuple<Node, String> getTypeParamAwareNode(CtFieldReference<?> ctFieldReference, BiFunction<String, Node.Type, Node> nodeFn) {
         Tuple<String, CtTypeReference> fn = fn(ctFieldReference, null);
         Node node = nodeFn.apply(fn._2.getQualifiedName(), nodeType(fn._2));
         return Tuple.of(node, fn._1);
     }
 
-    private Tuple<String,CtTypeReference> fn(CtFieldReference<?> ctFieldReference, Tuple<String, CtFieldReference> temp){
+    private Tuple<String, CtTypeReference> fn(CtFieldReference<?> ctFieldReference, Tuple<String, CtFieldReference> temp) {
         List<CtTypeReference<?>> actualTypeArguments = ctFieldReference.getType().getActualTypeArguments();
         String referenceSimpleName = ctFieldReference.getSimpleName();
 
@@ -90,7 +104,7 @@ public class ClassProcessor extends AbstractProcessor<CtClass> {
                 return Tuple.of(referenceSimpleName + ": listOf", ctTypeReference);
             case "Map":
             case "ImmutableMap":
-                return Tuple.of(referenceSimpleName + ": mappedBy["+actualTypeArguments.get(0)+"]", actualTypeArguments.get(1));
+                return Tuple.of(referenceSimpleName + ": mappedBy[" + actualTypeArguments.get(0) + "]", actualTypeArguments.get(1));
             default:
                 return Tuple.of(referenceSimpleName, ctFieldReference.getType());
         }

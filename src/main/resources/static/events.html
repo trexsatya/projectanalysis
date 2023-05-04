@@ -2,7 +2,8 @@
     <head>
         <script src="/static/lib/vis-network.js"> </script>
         <script src="/static/lib/jquery.min.js"> </script>
-        <script src="/static/main.js"> </script>
+        <script src="/static/lib/graphlib.js"> </script>
+        <script src="/static/events.js"> </script>
         <link href="/static/main.css" rel="stylesheet">
         <link href="/static/lib/vis-network.css" rel="stylesheet">
 
@@ -56,32 +57,12 @@
                 var li = text => { var el = document.createElement('li'); el.innerHTML = text; return el; }
 
                 window.loadedNetwork.network.on('click', e => {
-                  if(e.nodes && e.nodes.length > 0) {
-                     if(e.nodes[0].startsWith('spl-')){
 
-                     } else {
-                         document.getElementById('className').innerHTML = e.nodes[0];
-                         document.getElementById('methodList').innerHTML = ''
-
-                         fetch('/api/classData?name='+e.nodes[0]).then(it => it.json()).then(it => {
-
-                            it.methodDataList.map(x => {
-                                return getHtmlForMethod(x);
-                            }).forEach(method => document.getElementById('methodList').appendChild( li(method) ));
-
-                         })
-                     }
-                  }
                 });
 
                 window.loadedNetwork.network.on('doubleClick', e => {
                   if(e.nodes && e.nodes.length > 0) {
-                     if(e.nodes[0].startsWith('spl-')){
-
-                     } else {
-                         document.getElementById('search').value = e.nodes[0];
-                         updateNetwork();
-                     }
+                      console.log(e.nodes)
                   }
                 });
 

@@ -11,15 +11,15 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class WebServer {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
-        Spark.port(8080);
+        Spark.port(8093);
+        Analyzer.main(null);
 
         String path = "";
         Spark.get("/static/*", (req, res) -> {
@@ -27,24 +27,28 @@ public class WebServer {
                     .fold(ex -> {
                         ex.printStackTrace();
                         return "{}";
-                    }, val -> {
-                        return val;
-                    });
+                    }, val -> val);
             res.type(computeContentType(req.pathInfo()));
             return responseBody;
         });
 
         Gson gson = new Gson();
 
+
         Spark.get("/api/classData", (req,res) -> {
-            String name = req.queryParams("name");
-            return Global.INSTANCE.getClassData(name);
+            var annotations = Arrays.asList(req.queryParams("annotations").split(","));
+
+//            Set<ClassData> response = new HashSet<>();
+//            if(!annotations.isEmpty()) {
+//                response.addAll(Global.INSTANCE.withAnnotationsLike(annotations));
+//            }
+
+            res.type("application/json");
+            return Global.INSTANCE.all();
         }, gson::toJson);
 
         Spark.get("/api/graphData", (req,res) -> {
             String searchParam = req.params("search");
-
-            if(Global.INSTANCE.getNodes().isEmpty()) Analyzer.main(null);
 
             Map<String, Object> response = new HashMap<>();
             response.put("nodes", filter(Global.INSTANCE.getNodes(), searchParam));
@@ -58,6 +62,15 @@ public class WebServer {
             }).collect(Collectors.toList()));
 
             res.type("application/json");
+            return response;
+        }, gson::toJson);
+
+        Spark.get("/api/eventGraphData", (req,res) -> {
+            String searchParam = req.params("search");
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("events", EventFlowNetwork.getEvents());
+
             return response;
         }, gson::toJson);
 
@@ -95,6 +108,7 @@ public class WebServer {
         URI uri = resource.toURI();
         String path = uri.toString();
         path = path.replace("/out/production/", "/src/main/");
+        path = path.replace("/build/resources/main/", "/src/main/resources/");
 
         System.out.println(path);
 

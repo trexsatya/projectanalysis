@@ -15,10 +15,11 @@ public class InterfaceProcessor extends AbstractProcessor<CtInterface> {
     @Override
     public void process(CtInterface element) {
         if(element.getQualifiedName().endsWith(".IndexShard")) {
-            System.out.println();
+//            System.out.println();
         }
         Set<CtMethod<?>> methods = element.getMethods();
         List<ClassData.MethodData> methodData = methods.stream().filter(CtModifiable::isPublic).map(ClassData.MethodData::of).collect(Collectors.toList());
-        Global.INSTANCE.addClassData(element.getQualifiedName(), new ClassData(methodData));
+        Global.INSTANCE.addClassData(element.getQualifiedName(), ClassData.builder().className(element.getQualifiedName())
+                .methodDataList(methodData).build());
     }
 }

@@ -1,5 +1,9 @@
 package com.satya.projectanalysis;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.nio.file.LinkOption;
 import java.time.Year;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,6 +13,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class JavaUtils {
+    static Logger LOG = LoggerFactory.getLogger(JavaUtils.class);
     public interface ThrowingSupplier<X> {
         X get() throws Throwable;
     }
@@ -31,7 +36,8 @@ public class JavaUtils {
         } catch (Throwable throwable) {
             if(throwException) throw new RuntimeException(throwable);
             else {
-                throwable.printStackTrace();
+//                throwable.printStackTrace();
+                LOG.info("Error {}", throwable.getMessage());
                 return null;
             }
         }
@@ -48,7 +54,8 @@ public class JavaUtils {
             } catch (Throwable throwable) {
                 if(throwException) throw new RuntimeException(throwable);
                 else {
-                    throwable.printStackTrace();
+//                    throwable.printStackTrace();
+                    LOG.info("Error {}", throwable.getMessage());
                     return null;
                 }
             }
@@ -66,7 +73,8 @@ public class JavaUtils {
             } catch (Throwable throwable) {
                if(throwException) throw new RuntimeException(throwable);
                else {
-                   throwable.printStackTrace();
+//                   throwable.printStackTrace();
+                   LOG.info("Error {}", throwable.getMessage());
                }
             }
         };

@@ -13,15 +13,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.satya.projectanalysis.JavaUtils.wrapInRuntimeException;
+import static java.util.stream.Collectors.toList;
 
 public class JavassistClassProcessor {
     public void process(CtClass element) throws Exception {
         if(element.getPackageName().contains("java.lang.")) return;
         if(isInnerClass(element)) return;
-
-        if(element.getName().contains("Coordinator")) {
-            System.out.println();
-        }
 
         CtClass superclass = element.getSuperclass();
         CtClass[] interfaces = element.getInterfaces();
@@ -52,13 +49,15 @@ public class JavassistClassProcessor {
                 }, false));
 
         CtConstructor[] constructors = element.getConstructors();
-        List<ClassData.MethodData> constructorsList = Arrays.stream(constructors).map(ClassData.MethodData::of).collect(Collectors.toList());
+        List<ClassData.MethodData> constructorsList = Arrays.stream(constructors).map(ClassData.MethodData::of).collect(toList());
 
         CtMethod[] methods = element.getMethods();
-        List<ClassData.MethodData> methodData = Arrays.stream(methods).map(ClassData.MethodData::of).filter(Objects::nonNull).collect(Collectors.toList());
+        List<ClassData.MethodData> methodData = Arrays.stream(methods).map(ClassData.MethodData::of).filter(Objects::nonNull).collect(toList());
         constructorsList.addAll(methodData);
 
-        Global.INSTANCE.addClassData(thisClass.name, new ClassData(constructorsList));
+        Global.INSTANCE.addClassData(thisClass.name,  ClassData.builder()
+                        .className(element.getName())
+                .methodDataList(constructorsList).build());
     }
 
     private boolean isInnerClass(CtClass element) {

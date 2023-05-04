@@ -8,11 +8,14 @@ public class Node {
         CLASS, INTERFACE
     }
 
+    int id;
     public String name;
 
     public String simpleName;
 
     public Type type;
+
+    ClassData classData;
 
     @Override
     public boolean equals(Object o) {

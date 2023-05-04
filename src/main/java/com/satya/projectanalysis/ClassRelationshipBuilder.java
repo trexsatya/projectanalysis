@@ -1,12 +1,12 @@
 package com.satya.projectanalysis;
 
 public class ClassRelationshipBuilder {
-    private Node node;
+    private int node;
     private RelationshipType relationshipType;
     private String referenceName = "";
-    private String target;
+    private int target;
 
-    public ClassRelationshipBuilder setNode(Node node) {
+    public ClassRelationshipBuilder setNode(int node) {
         this.node = node;
         return this;
     }
@@ -21,7 +21,7 @@ public class ClassRelationshipBuilder {
         return this;
     }
 
-    public ClassRelationshipBuilder setTarget(String target) {
+    public ClassRelationshipBuilder setTarget(int target) {
         this.target = target;
         return this;
     }
