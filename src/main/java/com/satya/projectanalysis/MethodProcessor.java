@@ -1,13 +1,13 @@
 package com.satya.projectanalysis;
 
+import com.satya.projectanalysis.processors.writes.MethodDetail;
+import com.satya.projectanalysis.processors.writes.MethodInvocationProcessor;
 import lombok.Builder;
 import lombok.Value;
 import spoon.processing.AbstractProcessor;
 import spoon.reflect.code.*;
 import spoon.reflect.declaration.*;
-import spoon.reflect.reference.CtTypeReference;
 import spoon.support.reflect.code.CtInvocationImpl;
-import spoon.support.reflect.code.CtReturnImpl;
 import spoon.support.reflect.declaration.CtClassImpl;
 import spoon.support.reflect.declaration.CtNamedElementImpl;
 
@@ -19,10 +19,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static java.util.Optional.empty;
 import static java.util.Optional.ofNullable;
 
-public class MethodProcessor extends AbstractProcessor<CtMethod> {
+public class MethodProcessor extends AbstractProcessor<CtMethod<?>> {
     public static Map<String, List<String>> linesForClasses = new HashMap<>();
 
     public static final String TO_BE_REMOVED = "@TOBEREMOVED@";
@@ -36,25 +35,24 @@ public class MethodProcessor extends AbstractProcessor<CtMethod> {
         //Initialisation, assignments including conditions/loops etc
         String variableWriteSummary;
 
-        public static LocalVariableDetails from(CtLocalVariable ctLocalVariable) {
+        public static LocalVariableDetails from(CtLocalVariable<?> ctLocalVariable) {
             String locaVariableType = ctLocalVariable.getType().getQualifiedName();
             if(locaVariableType.endsWith(".var")) locaVariableType = null;
 
             String moreSpecificType = null;
-            CtExpression assignment = ctLocalVariable.getAssignment();
+            CtExpression<?> assignment = ctLocalVariable.getAssignment();
             if(assignment instanceof CtInvocation) {
-                CtInvocation invocation = (CtInvocation) assignment;
+                CtInvocation<?> invocation = (CtInvocation<?>) assignment;
                 moreSpecificType = ofNullable(invocation.getExecutable().getType())
                         .map(CtTypeInformation::getQualifiedName)
                         .orElse("");
                 if(moreSpecificType.endsWith(".var")) {
-                        CtExpression defaultExpression = ctLocalVariable.getDefaultExpression();
-                        if(defaultExpression instanceof CtInvocation) {
-                            moreSpecificType = ofNullable(RegexBasedAnalysis.tryToInferType((CtInvocation)defaultExpression))
-                                    .map(MethodInvocationProcessor.ArgumentDetail::getType)
-                                    .orElse(moreSpecificType);
-                        }
-
+//                        CtExpression<?> defaultExpression = ctLocalVariable.getDefaultExpression();
+//                        if(defaultExpression instanceof CtInvocation) {
+//                            moreSpecificType = ofNullable(RegexBasedAnalysis.tryToInferType((CtInvocation<?>)defaultExpression))
+//                                    .map(MethodInvocationProcessor.ArgumentDetail::getType)
+//                                    .orElse(moreSpecificType);
+//                        }
                 }
             }
 
@@ -65,117 +63,30 @@ public class MethodProcessor extends AbstractProcessor<CtMethod> {
         }
     }
 
-    @Builder
-    @Value
-    public static class MethodDetail {
-        String fullyQualifiedClassName;
-        String methodName;
-//        Map<String, String> parameters;
-        @Builder.Default
-        List<String> parameters = new ArrayList<>();
-
-        String methodSignature;
-
-        String implementation;
-        //Name, detail
-        @Builder.Default
-        Map<String, LocalVariableDetails> variableDetails = new HashMap<>();
-        String returnType;
-        String returnExpressionSummary;
-        String summary;
-
-        private static String returnType(CtMethod method) {
-            CtTypeReference type = method.getType();
-            if(type != null) {
-                return type.getQualifiedName();
-            }
-            return null;
-        }
-
-        private static Optional<String> returnType(CtBlock body) {
-            if(body == null || body.getStatements() == null) {
-                return empty();
-            }
-            return body.getStatements().stream()
-                    .filter(it -> it instanceof CtReturnImpl)
-                    .findFirst()
-                    .map(it -> (CtReturnImpl)it)
-                    .map(CtReturnImpl::getReturnedExpression)
-                    .map(MethodDetail::returnedExpressionType);
-        }
-
-        private static String  returnedExpressionType(CtExpression it) {
-            if(it instanceof CtInvocation) {
-                CtInvocation invocation = (CtInvocation) it;
-                /*
-                 * Enhance this
-                 * It is null in case of, for example, ((T) (memoizedFactory.apply(avroEvent.getClass()).toDomain(avroEvent)))
-                 */
-                return ofNullable(invocation.getExecutable()
-                        .getType())
-                        .map(CtTypeInformation::getQualifiedName)
-                        .orElse(null);
-            }
-            if(it instanceof CtVariableRead) {
-                CtVariableRead variableRead = (CtVariableRead) it;
-                return variableRead.getVariable().getType().getQualifiedName();
-            }
-            return null;
-        }
-
-        public static MethodDetail from(CtMethod method) {
-            return MethodDetail.builder()
-                    .methodName(method.getSimpleName())
-                    .parameters(parameters(method))
-                    .fullyQualifiedClassName(className(method))
-                    .returnType(returnType(method.getBody()).orElse(returnType(method)))
-                    .methodSignature(signature(method))
-                    .variableDetails(variables(method))
-                    .implementation(method.toString())
-                    .build();
-        }
-
-        private static Map<String, LocalVariableDetails> variables(CtMethod method) {
-            Map<String, LocalVariableDetails> variableDetailsMap = new HashMap<>();
-            method.getBody().getStatements().forEach(var -> {
-                        LocalVariableDetails details = null;
-                        if(var instanceof CtLocalVariable) {
-                            details = LocalVariableDetails.from((CtLocalVariable) var);
-                        }
-
-                        if(details != null) {
-                            variableDetailsMap.put(details.name, details);
-                        }
-                    });
-            return variableDetailsMap;
-        }
-    }
-
-    static String className(CtMethod method) {
+    public static String className(CtMethod<?> method) {
         String packageName = "";
         if(method.getParent() instanceof CtClass) {
-            CtClass clazz = (CtClass) method.getParent();
+             var clazz = (CtClass<?>) method.getParent();
              packageName = clazz.getParent().toString();
              return packageName + "." + clazz.getSimpleName();
         }
         if(method.getParent() instanceof CtInterface) {
-            CtInterface clazz = (CtInterface) method.getParent();
+            var clazz = (CtInterface<?>) method.getParent();
             packageName = clazz.getParent().toString();
             return packageName + "." + clazz.getSimpleName();
         }
         return null;
     }
 
-    static List<String> parameters(CtMethod method) {
-        return (List<String>) method.getParameters().stream().map(Object::toString).collect(Collectors.toList());
+    public static List<String> parameters(CtMethod<?> method) {
+        return method.getParameters().stream().map(Object::toString).collect(Collectors.toList());
     }
 
-    static String signature(CtMethod method) {
-        List types = new ArrayList();
+    public static String signature(CtMethod<?> method) {
+        List<String> types = new ArrayList<>();
 
-        for (Object parameter : method.getParameters()) {
-            CtParameter param = (CtParameter) parameter;
-            types.add(param.getType().getQualifiedName());
+        for (CtParameter<?> parameter : method.getParameters()) {
+            types.add(parameter.getType().getQualifiedName());
         }
 
         return method.getSimpleName() + "("+ String.join(", ", types) + ")";
@@ -190,7 +101,7 @@ public class MethodProcessor extends AbstractProcessor<CtMethod> {
         if(element.getParent(CtClassImpl.class) == null) {
             return;
         }
-        System.out.println(element.getParent(CtClassImpl.class).getSimpleName() + element.getSimpleName());
+        System.out.println(element.getParent(CtClassImpl.class).getSimpleName() + "."+ element.getSimpleName());
         if(element.getBody() != null && isTest(element) && needsMigration(element)) { //So that we get specific types
             Global.ClassPool.addMethod(MethodDetail.from(element));
             element.getBody().getStatements()

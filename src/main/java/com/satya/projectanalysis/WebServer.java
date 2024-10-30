@@ -19,7 +19,6 @@ public class WebServer {
     public static void main(String[] args) throws Exception {
 
         Spark.port(8093);
-        Analyzer.main(null);
 
         String path = "";
         Spark.get("/static/*", (req, res) -> {

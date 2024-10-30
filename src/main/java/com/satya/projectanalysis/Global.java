@@ -1,8 +1,10 @@
 package com.satya.projectanalysis;
 
+import com.satya.projectanalysis.processors.writes.MethodDetail;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import lombok.Getter;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -11,26 +13,11 @@ public enum Global {
     INSTANCE;
 
     public static class ClassPool {
-        private static final Map<String, Map<String, MethodProcessor.MethodDetail>> methods = new HashMap<>();
+        private static final Map<String, Map<String, MethodDetail>> methods = new HashMap<>();
 
-        public static void addMethod(MethodProcessor.MethodDetail detail) {
+        public static void addMethod(MethodDetail detail) {
             methods.computeIfAbsent(detail.getFullyQualifiedClassName(), k -> new HashMap<>())
                     .put(detail.getMethodSignature(), detail);
-        }
-
-        /**
-         * TODO: Add support for regex
-         */
-        public static MethodProcessor.MethodDetail getMethod(String className, String methodSignature) {
-            return Optional.ofNullable(methods.get(className))
-                    .map(it -> it.get(methodSignature))
-                    .orElse(null);
-        }
-
-        public static MethodProcessor.LocalVariableDetails getMethodVariable(String className, String methodSignature, String variableName) {
-            return Optional.ofNullable(getMethod(className, methodSignature))
-                    .map(it -> it.getVariableDetails().get(variableName))
-                    .orElse(null);
         }
     }
 
@@ -71,17 +58,13 @@ public enum Global {
     }
 
     //Id -> Node
-    private final Map<String, Node> nodes = new HashMap<>();
+    @Getter private final Map<String, Node> nodes = new HashMap<>();
 
     //NodeId -> NodeId
     private final Map<ClassRelationship, Boolean> relationshipMap = new HashMap<>();
 
     private final Map<String, ClassData> classDataMap = new HashMap<>();
 
-
-    public Map<String, Node> getNodes(){
-        return nodes;
-    }
 
     final AtomicInteger counter = new AtomicInteger(0);
     public Node getOrCreateNode(String name, Node.Type nodeType){

@@ -2844,7 +2844,7 @@ then(triggerScheduler).should().schedule(any());
 then(triggerDetailsService).should().getDelay(any());
     }
 }
-8078 [main] INFO com.satya.projectanalysis.Analyzer - 1117 jar files.
+8078 [main] INFO com.satya.projectanalysis.analysers.Analyzer - 1117 jar files.
 9120 [main] INFO com.satya.projectanalysis.JavaUtils - Error com.klarna.dcpipe.simulator.handler.BalanceDunningStateUpdatedHandler
 9124 [main] INFO com.satya.projectanalysis.JavaUtils - Error com.klarna.dcpipe.simulator.cache.SimSeedCache
 9128 [main] INFO com.satya.projectanalysis.JavaUtils - Error com.klarna.dcpipe.simulator.events.sal.dunningstate.BalanceDunningStateUpdatedEventPublisher

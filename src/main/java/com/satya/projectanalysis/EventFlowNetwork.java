@@ -1,12 +1,13 @@
 package com.satya.projectanalysis;
 
+import com.satya.projectanalysis.processors.writes.MethodDetail;
+import com.satya.projectanalysis.processors.writes.MethodInvocationProcessor;
 import lombok.Builder;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.Value;
-import lombok.extern.log4j.Log4j;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 
@@ -15,18 +16,19 @@ public class EventFlowNetwork {
     @Builder
     @Value
     static class Consumer {
-        MethodProcessor.MethodDetail methodDetail;
+        MethodDetail methodDetail;
     }
 
     @Builder
     @Value
     static class Producer {
-        MethodInvocationProcessor.InvocationDetail invocationDetail;
+        MethodInvocationProcessor.MethodInvocationDetail methodInvocationDetail;
     }
 
     @Builder(toBuilder = true)
     @Getter
     @Setter
+    @Data
     static class Event {
         String name;
         @Builder.Default
@@ -37,17 +39,16 @@ public class EventFlowNetwork {
 
     private static final Map<String, Event> events = new HashMap<>();
 
-    public static void add(String eventName, MethodInvocationProcessor.InvocationDetail invocationDetail) {
-        if(invocationDetail == null) {
+    public static void add(String eventName, MethodInvocationProcessor.MethodInvocationDetail methodInvocationDetail) {
+        if(methodInvocationDetail == null) {
             log.warn("eventName invocationDetail -> null");
             return;
         }
         events.computeIfAbsent(eventName, k -> Event.builder().build()).producers
-                .add(Producer.builder().invocationDetail(invocationDetail
-                ).build());
+                .add(Producer.builder().methodInvocationDetail(methodInvocationDetail).build());
     }
 
-    public static void add(String eventName, MethodProcessor.MethodDetail methodDetail) {
+    public static void add(String eventName, MethodDetail methodDetail) {
         if(methodDetail == null) {
             log.warn("eventName methodDetail -> null");
             return;

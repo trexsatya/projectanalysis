@@ -1,36 +1,34 @@
 package com.satya.projectanalysis;
 
 
-import com.google.gson.internal.Streams;
+import java.lang.annotation.Annotation;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javassist.CtClass;
 import javassist.Modifier;
-import javassist.NotFoundException;
 import javassist.bytecode.CodeAttribute;
 import javassist.bytecode.LocalVariableAttribute;
 import javassist.bytecode.MethodInfo;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import spoon.reflect.cu.SourcePosition;
 import spoon.reflect.declaration.CtAnnotation;
 import spoon.reflect.declaration.CtConstructor;
 import spoon.reflect.declaration.CtMethod;
-import spoon.support.reflect.declaration.CtMethodImpl;
 import spoon.support.reflect.declaration.CtParameterImpl;
-
-import java.lang.annotation.Annotation;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Builder
 @Data
 public class ClassData {
     @Data @Builder
-    static class ImplementsType {
+    public static class ImplementsType {
         String name;
         List<String> typeArguments;
     }
@@ -72,6 +70,10 @@ public class ClassData {
 
 
     String className;
+
+    public String className() {
+        return className;
+    }
 
     @Data
     public static class MethodData {
